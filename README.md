@@ -8,3 +8,4 @@
 
 - [CSAPP-Labs](https://github.com/Exely/CSAPP-Labs)
 - [labs环境搭建](https://blog.csdn.net/aawoe/article/details/107104947)
+- [docker创建linux镜像](https://zhuanlan.zhihu.com/p/59548929)
