@@ -181,7 +181,9 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+  while (x & 1) {
+    x = x >> 2;
+  }
 }
 /* 
  * negate - return -x 
