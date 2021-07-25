@@ -152,9 +152,8 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-
   return 1 << 31;
-
+  // -2^31
 }
 //2
 /*
@@ -164,13 +163,8 @@ int tmin(void) {
  *   Max ops: 10
  *   Rating: 1
  */
-// x -> 0111
-// i -> 1000
 int isTmax(int x) {
-  // 10...0
-  int i = !(~ ((x + 1) ^ x)); // 0000
-  int j = !!(x + 1);
-  return i & j;
+  return !((x + 1) ^ (1 << 31));
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -181,10 +175,9 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  while (x & 1) {
-    x = x >> 2;
-  }
+  return !(~(x | 0x55555555));
 }
+
 /* 
  * negate - return -x 
  *   Example: negate(1) = -1.
@@ -193,7 +186,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x + 1;
 }
 //3
 /* 
@@ -205,8 +198,16 @@ int negate(int x) {
  *   Max ops: 15
  *   Rating: 3
  */
+// 右移是算术右移
+// 0011 0000 ~ 0011 1001
 int isAsciiDigit(int x) {
-  return 2;
+  // 第 5、6 位只能是1
+  int x1 = (x >> 4) ^ 0x3;
+
+  int x2 = (x >> 3) & 0x1;
+  int x3 = (x >> 2) & 0x1;
+  int x4 = (x >> 1) & 0x1;
+  return !x1 & (!x2) | (x2 & !x3 & !x4);
 }
 /* 
  * conditional - same as x ? y : z 
@@ -216,7 +217,7 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -226,7 +227,7 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  return !(x ^ y) | ((x + (~y + 1)) & 0);
 }
 //4
 /* 
@@ -238,7 +239,6 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -254,6 +254,7 @@ int logicalNeg(int x) {
  */
 int howManyBits(int x) {
   return 0;
+
 }
 //float
 /* 
