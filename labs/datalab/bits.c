@@ -217,7 +217,11 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-
+  // x ? 1 : 0;
+  x = !!x;
+  x = ~x + 1;
+  // 1 为 0000001 其补码为其取反 +1,则全是 1,取反则全是0
+  return (x & y) | (~x & z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -226,8 +230,17 @@ int conditional(int x, int y, int z) {
  *   Max ops: 24
  *   Rating: 3
  */
+// x = y -> x ^ y = 0
+// y - x > 0 返回 1 
 int isLessOrEqual(int x, int y) {
-  return !(x ^ y) | ((x + (~y + 1)) & 0);
+  // 符号不同，正数大; 符号相同求差值的符号
+  int add = y + (~x + 1); // y - x 需要是正
+  int judgeAdd = add & 0x8fffffff; // y - x 的符号, 负数为1 正数为 0
+  int signedX = x & 0x8fffffff; // 求符号位
+  int signedY = y & 0x8fffffff;
+  int flag = ((signedX ^ signedY) >> 31) & 1; // 符号相同 0 不同为 1
+  // 符号相同要求 y- x > 0，符号不同要求 x 是负数
+  return (!flag & !judgeAdd) | (flag & (signedX >> 31));
 }
 //4
 /* 
@@ -238,7 +251,9 @@ int isLessOrEqual(int x, int y) {
  *   Max ops: 12
  *   Rating: 4 
  */
+// !
 int logicalNeg(int x) {
+  return ((x | (~x + 1)) >> 31) + 1;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -252,8 +267,9 @@ int logicalNeg(int x) {
  *  Max ops: 90
  *  Rating: 4
  */
+// 一个数使用补码表示需要多少位
 int howManyBits(int x) {
-  return 0;
+  int signedX = (x >> 31) & 1;
 
 }
 //float
@@ -268,8 +284,9 @@ int howManyBits(int x) {
  *   Max ops: 30
  *   Rating: 4
  */
+// 求 2 乘浮点数
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -284,7 +301,18 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  int exp = ((uf >> 23) & 0xff) - 127;
+  // out of range
+  if (exp > 31) {
+    return 1 << 31;
+  }
+  if (exp < 0) {
+    return 0;
+  }
+  int frac = (uf & 0x007fffff) | 0x00800000;
+  int f = (exp > 23) ? (frac << (exp << 23)) : (frac >> (23 - exp));
+
+  return (uf & 1 << 31) ? f : -f;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -299,6 +327,24 @@ int floatFloat2Int(unsigned uf) {
  *   Max ops: 30 
  *   Rating: 4
  */
+// 求 2.0^x
+// 家庭作业 2.90
+// float k = 8 n = 23 bias = 2^7 - 1 = 127
+// 最小的正非规格化数位 2 ^ (1 - bias - n) = 2^(-149)
+// 最小的规格化数 2 ^(0 - bias) * 2 = 2 ^ (-126)
+// 最大的规格化数 2^(2^8 -2 - bias) = 2^127
+// 因此各区间为 [Tmin, -148], [-149, -125], [-126, 127], [128, Tmax]
 unsigned floatPower2(int x) {
-    return 2;
+  unsigned exp, frac;
+  unsigned u;
+  if (x < -149) {
+    return 0;
+  } else if (x < -126) {
+    return 1 << (149 + x);
+  } else if (x < 128) {
+    return (x + 127) << 23;
+  } else {
+    // return inf
+    return 0x7f800000;
+  }
 }
