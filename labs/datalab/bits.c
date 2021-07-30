@@ -268,9 +268,10 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 // 一个数使用补码表示需要多少位
+// 补码表示的最小位数
 int howManyBits(int x) {
   int signedX = (x >> 31) & 1;
-
+  
 }
 //float
 /* 
@@ -286,7 +287,28 @@ int howManyBits(int x) {
  */
 // 求 2 乘浮点数
 unsigned floatScale2(unsigned uf) {
-  
+  // 求出阶码位
+  unsigned exp = uf & 0x7f800000;
+  // 符号位
+  unsigned sign = uf & 0x80000000;
+  // 小数位置
+  unsigned frac = uf & 0x007fffff;
+
+  // 小数位没有就直接 * 2 带符号
+  if (exp == 0) {
+    return sign | uf << 1;
+  }
+  // 小数位拉满就不同 * 了
+  if (exp == 0x7f800000) {
+    return uf;
+  }
+
+  exp += 0x00800000;
+
+  if (exp == 0x7f800000) {
+    frac = 0;
+  }
+  return sign | exp | frac;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -335,8 +357,6 @@ int floatFloat2Int(unsigned uf) {
 // 最大的规格化数 2^(2^8 -2 - bias) = 2^127
 // 因此各区间为 [Tmin, -148], [-149, -125], [-126, 127], [128, Tmax]
 unsigned floatPower2(int x) {
-  unsigned exp, frac;
-  unsigned u;
   if (x < -149) {
     return 0;
   } else if (x < -126) {
