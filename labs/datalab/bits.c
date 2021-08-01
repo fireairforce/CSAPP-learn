@@ -170,6 +170,7 @@ int isTmax(int x) {
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
  *   where bits are numbered from 0 (least significant) to 31 (most significant)
  *   Examples allOddBits(0xFFFFFFFD) = 0, allOddBits(0xAAAAAAAA) = 1
+ // A = 1001
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 12
  *   Rating: 2
@@ -198,7 +199,6 @@ int negate(int x) {
  *   Max ops: 15
  *   Rating: 3
  */
-// 右移是算术右移
 // 0011 0000 ~ 0011 1001
 int isAsciiDigit(int x) {
   // 第 5、6 位只能是1
@@ -323,18 +323,20 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  int exp = ((uf >> 23) & 0xff) - 127;
-  // out of range
-  if (exp > 31) {
-    return 1 << 31;
-  }
+  int s = uf >> 31, exp = ((uf >> 23) & 0xff) - 127, frac = (uf & 0x007fffff) | 0x00800000;
+  int value = 0;
   if (exp < 0) {
     return 0;
   }
-  int frac = (uf & 0x007fffff) | 0x00800000;
-  int f = (exp > 23) ? (frac << (exp << 23)) : (frac >> (23 - exp));
-
-  return (uf & 1 << 31) ? f : -f;
+  if (exp > 30) {
+    return 0x80000000;
+  }
+  if (exp < 23) {
+    value = frac >> (23 - exp);
+  } else if (exp > 23) {
+    value = frac << (exp - 23);
+  }
+  return sign ? -value : value; 
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -359,12 +361,12 @@ int floatFloat2Int(unsigned uf) {
 unsigned floatPower2(int x) {
   if (x < -149) {
     return 0;
-  } else if (x < -126) {
-    return 1 << (149 + x);
-  } else if (x < 128) {
-    return (x + 127) << 23;
-  } else {
-    // return inf
-    return 0x7f800000;
   }
+  if (x < -126) {
+    return 1 << (149 + x);
+  }
+  if (x < 128) {
+    return (x + 127) << 23;
+  }
+  return 0x7f800000;
 }
