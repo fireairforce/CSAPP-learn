@@ -306,17 +306,20 @@ unsigned floatScale2(unsigned uf) {
   // 小数位置
   unsigned frac = uf & 0x007fffff;
 
-  // 小数位没有就直接 * 2 带符号
+  // 阶码位如果为0，直接 * 2 就行
   if (exp == 0) {
     return sign | uf << 1;
   }
-  // 小数位拉满就不同 * 了
+
+  // 阶码位太大溢出直接返回现有的值就行
   if (exp == 0x7f800000) {
     return uf;
   }
 
+  // 阶码位加最大值之后要溢出了
   exp += 0x00800000;
 
+  // 如果这里到溢出点了的话，直接
   if (exp == 0x7f800000) {
     frac = 0;
   }
@@ -335,12 +338,12 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  int s = uf >> 31, exp = ((uf >> 23) & 0xff) - 127, frac = (uf & 0x007fffff) | 0x00800000;
+  int sign = uf >> 31, exp = ((uf >> 23) & 0xff) - 127, frac = (uf & 0x007fffff) | 0x00800000;
   int value = 0;
   if (exp < 0) {
     return 0;
   }
-  if (exp > 30) {
+  if (exp > 31) {
     return 0x80000000;
   }
   if (exp < 23) {
@@ -348,7 +351,7 @@ int floatFloat2Int(unsigned uf) {
   } else if (exp > 23) {
     value = frac << (exp - 23);
   }
-  return sign ? -value : value; 
+  return sign ? ~value + 1 : value; 
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
