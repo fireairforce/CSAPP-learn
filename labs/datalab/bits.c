@@ -270,8 +270,20 @@ int logicalNeg(int x) {
 // 一个数使用补码表示需要多少位
 // 补码表示的最小位数
 int howManyBits(int x) {
-  int signedX = (x >> 31) & 1;
-  
+  int signedX = x >> 31;
+  x = (sign & ~x) | (~sign & x);
+  int b16 = !!(x >> 16) << 4;
+  x = x >> b16;
+  int b8 = !!(x >> 8) << 3;
+  x = x >> b8;
+  int b4 = !!(x >> 4) << 2;
+  x = x >> b4;
+  int b2 = !!(x >> 2) << 1;
+  x = x >> b2;
+  int b1 = !!(x >> 1);
+  x = x >> b1;
+  b0 = x;
+  return b16 + b8 + b4 + b2 + b1 + b0 + 1;
 }
 //float
 /* 
@@ -363,10 +375,11 @@ unsigned floatPower2(int x) {
     return 0;
   }
   if (x < -126) {
-    return 1 << (149 + x);
+    return 1 << (x + 149);
   }
   if (x < 128) {
     return (x + 127) << 23;
   }
-  return 0x7f800000;
+  // INF
+  return 0xff << 23;
 }
